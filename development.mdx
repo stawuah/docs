@@ -1,6 +1,7 @@
 ---
-title: Development
-description: Set up swiftui-rn locally, contribute, or build on top of it.
+title: "Development"
+description: "Set up swiftui-rn locally, contribute, or build on top of it."
+mode: "center"
 ---
 
 ## Local development
@@ -26,7 +27,7 @@ The compiled output lands in `dist/` — this is what gets published to npm.
 
 ## Project structure
 
-```
+```text
 swiftui-rn/
 ├── src/
 │ ├── types.ts ← base ViewNode class, NodeProps interface, toRNStyle()
@@ -46,37 +47,37 @@ swiftui-rn/
 ## How a node becomes a component
 
 <Steps>
-<Step title="You call a factory">
-```ts
-const btn = Button('Send', onPress).bg('#16a34a').padding(18).rounded(14)
-```
-This creates a `ButtonNode` instance and sets props on it via chainable methods.
-</Step>
+  <Step title="You call a factory">
+    ```ts
+    const btn = Button('Send', onPress).bg('#16a34a').padding(18).rounded(14)
+    ```
 
-<Step title="Props are stored as plain data">
-```ts
-btn._props // { text: 'Send', onPress: fn, backgroundColor: '#16a34a', padding: 18, borderRadius: 14 }
-btn._type // 'Button'
-```
-No rendering has happened yet. The node is just a data object.
-</Step>
+    This creates a `ButtonNode` instance and sets props on it via chainable methods.
+  </Step>
+  <Step title="Props are stored as plain data">
+    ```ts
+    btn._props // { text: 'Send', onPress: fn, backgroundColor: '#16a34a', padding: 18, borderRadius: 14 }
+    btn._type // 'Button'
+    ```
 
-<Step title="Render walks the tree">
-When `<Render node={btn} />` mounts, it calls `toRNStyle()` on the node's props, then returns the correct React Native component:
+    No rendering has happened yet. The node is just a data object.
+  </Step>
+  <Step title="Render walks the tree">
+    When `<Render node={btn} />` mounts, it calls `toRNStyle()` on the node's props, then returns the correct React Native component:
 
-```tsx
-// What Render outputs for a ButtonNode:
-<TouchableOpacity
-onPress={props.onPress}
-activeOpacity={0.8}
-style={toRNStyle(props)}
->
-<Text style={{ color: props.color, fontSize: props.fontSize }}>
-{props.text}
-</Text>
-</TouchableOpacity>
-```
-</Step>
+    ```tsx
+    // What Render outputs for a ButtonNode:
+    <TouchableOpacity
+    onPress={props.onPress}
+    activeOpacity={0.8}
+    style={toRNStyle(props)}
+    >
+    <Text style={{ color: props.color, fontSize: props.fontSize }}>
+    {props.text}
+    </Text>
+    </TouchableOpacity>
+    ```
+  </Step>
 </Steps>
 
 ---
@@ -84,6 +85,7 @@ style={toRNStyle(props)}
 ## Adding a new primitive
 
 1. Add a new type to the `NodeType` union in `src/types.ts`:
+
 ```ts
 export type NodeType =
 | 'VStack' | 'HStack' | ...
@@ -91,6 +93,7 @@ export type NodeType =
 ```
 
 2. Create a subclass in `src/nodes.ts`:
+
 ```ts
 export class BadgeNode extends ViewNode<BadgeNode> {
 constructor(label: string) {
@@ -105,11 +108,13 @@ return this
 ```
 
 3. Add the factory in `src/index.ts`:
+
 ```ts
 export const Badge = (label: string) => new BadgeNode(label)
 ```
 
 4. Handle it in `src/renderer.tsx`:
+
 ```tsx
 case 'Badge':
 return (
@@ -135,14 +140,13 @@ npm publish --access public
 ```
 
 <Warning>
-Update the `"author"` and `"repository"` fields in `package.json` before publishing.
-Also bump `"version"` using semver for every subsequent release.
+  Update the `"author"` and `"repository"` fields in `package.json` before publishing. Also bump `"version"` using semver for every subsequent release.
 </Warning>
 
 ### Versioning guide
 
-| Change type | Version bump | Example |
-|---|---|---|
-| Bug fix | Patch | 0.1.0 → 0.1.1 |
-| New modifier / primitive | Minor | 0.1.0 → 0.2.0 |
-| Breaking API change | Major | 0.1.0 → 1.0.0
+| Change type              | Version bump | Example       |
+| ------------------------ | ------------ | ------------- |
+| Bug fix                  | Patch        | 0.1.0 → 0.1.1 |
+| New modifier / primitive | Minor        | 0.1.0 → 0.2.0 |
+| Breaking API change      | Major        | 0.1.0 → 1.0.0 |
