@@ -1,97 +1,123 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
+description: "A SwiftUI-inspired fluent API wrapper for React Native. Write readable, declarative, zero-CSS UI code for React Native apps using a chainable modifier syntax."
 ---
 
-## Setting up
+## What is swiftui-rn?
 
-Get your documentation site up and running in minutes.
+**swiftui-rn** lets you build React Native screens the way SwiftUI developers expect — no JSX soup, no `StyleSheet.create()`, no CSS. Every UI element is a **node**. Every style is a **modifier**. You chain them. It renders.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
+<CardGroup cols={2}>
+  <Card icon="rocket" href="/guides/getting-started/quickstart" title="Quick Start">
+    Install the package and build your first screen in under 5 minutes.
+  </Card>
+  <Card icon="code" href="/api-reference/containers" title="API Reference">
+    Full reference for every primitive, modifier, and option.
+  </Card>
+  <Card icon="palette" href="/guides/customization/design-tokens" title="Design Tokens">
+    Build a consistent design system with plain JS objects.
+  </Card>
+  <Card icon="puzzle-piece" href="/guides/customization/reusable-components" title="Reusable Components">
+    Compose complex UI from small, reusable node functions.
+  </Card>
+</CardGroup>
+
+---
+
+## Why swiftui-rn?
+
+The problem with React Native styling has always been the gap between how you **think** about UI and how you **write** it. You picture a card with padding, a rounded corner, and a shadow — but you end up writing a deeply nested object inside JSX.
+
+swiftui-rn closes that gap.
+
+<CodeGroup>
+
+```tsx Without swiftui-rn
+<View style={{
+flexDirection: 'column',
+padding: 24,
+backgroundColor: '#0f172a',
+borderRadius: 16,
+gap: 12
+}}>
+<Text style={{
+fontSize: 28,
+fontWeight: 'bold',
+color: '#fff'
+}}>
+SwiftPay
+</Text>
+<TouchableOpacity
+style={{
+backgroundColor: '#16a34a',
+padding: 18,
+borderRadius: 14
+}}
+onPress={handleSend}
 >
-  Follow our three step quickstart guide.
-</Card>
+<Text style={{ color: '#fff', fontWeight: '600' }}>
+Send Now
+</Text>
+</TouchableOpacity>
+</View>
+```
 
-## Make it yours
 
-Design a docs site that looks great and empowers your users.
+```tsx With swiftui-rn
+import { VStack, Text, Button, Render } from 'swiftui-rn'
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+const screen = VStack(
+Text('SwiftPay')
+.fontSize(28)
+.bold()
+.color('#fff'),
 
-## Create beautiful pages
+Button('Send Now', handleSend)
+.bg('#16a34a')
+.padding(18)
+.rounded(14),
+)
+.bg('#0f172a')
+.padding(24)
+.rounded(16)
+.gap(12)
 
-Everything you need to create world-class documentation.
+export default () => <Render node={screen} />
+```
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CodeGroup>
 
-## Need inspiration?
+Same output. Same performance. Half the lines. Zero StyleSheet.
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+---
+
+## Core concepts
+
+<AccordionGroup>
+  <Accordion title="Everything is a node">
+    Every UI element — a stack, a text label, a button, an image — is a `ViewNode` object. Nodes hold their style props and children as plain JavaScript data.
+  </Accordion>
+  <Accordion title="Modifiers are chainable methods">
+    Instead of passing a style object, you call methods on the node. Each method returns the same node, so you can chain as many as you want. `.padding(16).rounded(12).shadow()` reads exactly like SwiftUI modifiers.
+  </Accordion>
+  <Accordion title="One Render component">
+    You build your entire screen as a node tree, then pass it to `<Render node={...} />`. The renderer walks the tree and outputs the correct React Native components — `View`, `Text`, `TouchableOpacity`, `Image`, `TextInput`, etc.
+  </Accordion>
+  <Accordion title="No runtime magic">
+    swiftui-rn is a thin wrapper. Node trees are plain objects. `toRNStyle()` is a simple property map. There is no proxy, no compiler, no Babel plugin. What you write is what runs.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Performance
+
+swiftui-rn adds a wrapper layer on top of React Native — but how much does that cost?
+
+At **~1–5 microseconds per render**, the overhead is imperceptible. React Native's own JS bridge and reconciler cost 10–100x more than the fluent wrapper itself.
+
+<Tip>
+  Build static node trees **outside** your component body. Only use `useMemo()` when the tree depends on props or state. This keeps re-render cost at exactly zero.
+</Tip>
+
+[Run the live benchmark →](/benchmark)
