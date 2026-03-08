@@ -1,94 +1,148 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: Development
+description: Set up swiftui-rn locally, contribute, or build on top of it.
 ---
 
-<Info>
-  **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
-</Info>
+## Local development
 
-Follow these steps to install and run Mintlify on your operating system.
+Clone the repo and install dependencies.
+
+```bash
+git clone https://github.com/stawuah/swiftui-rn
+cd swiftui-rn
+npm install
+```
+
+Build the TypeScript source:
+
+```bash
+npm run build # compile once
+npm run dev # watch mode
+```
+
+The compiled output lands in `dist/` — this is what gets published to npm.
+
+---
+
+## Project structure
+
+```
+swiftui-rn/
+├── src/
+│ ├── types.ts ← base ViewNode class, NodeProps interface, toRNStyle()
+│ ├── nodes.ts ← VStackNode, TextNode, ButtonNode, ImageNode, etc.
+│ ├── renderer.tsx ← <Render node={...} /> component
+│ └── index.ts ← public factory functions + re-exports
+├── examples/
+│ └── SendScreen.tsx ← full production example
+├── dist/ ← compiled output (gitignored)
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+---
+
+## How a node becomes a component
 
 <Steps>
-<Step title="Install the Mintlify CLI">
-
-```bash
-npm i -g mint
+<Step title="You call a factory">
+```ts
+const btn = Button('Send', onPress).bg('#16a34a').padding(18).rounded(14)
 ```
+This creates a `ButtonNode` instance and sets props on it via chainable methods.
 </Step>
 
-<Step title="Preview locally">
-
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
-
-```bash
-mint dev
+<Step title="Props are stored as plain data">
+```ts
+btn._props // { text: 'Send', onPress: fn, backgroundColor: '#16a34a', padding: 18, borderRadius: 14 }
+btn._type // 'Button'
 ```
+No rendering has happened yet. The node is just a data object.
+</Step>
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+<Step title="Render walks the tree">
+When `<Render node={btn} />` mounts, it calls `toRNStyle()` on the node's props, then returns the correct React Native component:
 
+```tsx
+// What Render outputs for a ButtonNode:
+<TouchableOpacity
+onPress={props.onPress}
+activeOpacity={0.8}
+style={toRNStyle(props)}
+>
+<Text style={{ color: props.color, fontSize: props.fontSize }}>
+{props.text}
+</Text>
+</TouchableOpacity>
+```
 </Step>
 </Steps>
 
-## Custom ports
+---
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+## Adding a new primitive
+
+1. Add a new type to the `NodeType` union in `src/types.ts`:
+```ts
+export type NodeType =
+| 'VStack' | 'HStack' | ...
+| 'Badge' // ← your new type
+```
+
+2. Create a subclass in `src/nodes.ts`:
+```ts
+export class BadgeNode extends ViewNode<BadgeNode> {
+constructor(label: string) {
+super('Badge', { text: label })
+}
+variant(v: 'success' | 'error' | 'info'): BadgeNode {
+const colors = { success: '#16a34a', error: '#ef4444', info: '#3b82f6' }
+this._props.backgroundColor = colors[v]
+return this
+}
+}
+```
+
+3. Add the factory in `src/index.ts`:
+```ts
+export const Badge = (label: string) => new BadgeNode(label)
+```
+
+4. Handle it in `src/renderer.tsx`:
+```tsx
+case 'Badge':
+return (
+<View style={[{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }, style]}>
+<Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{p.text}</Text>
+</View>
+)
+```
+
+---
+
+## Publishing to npm
 
 ```bash
-mint dev --port 3333
+# 1. Build
+npm run build
+
+# 2. Login (first time only)
+npm login
+
+# 3. Publish
+npm publish --access public
 ```
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
+<Warning>
+Update the `"author"` and `"repository"` fields in `package.json` before publishing.
+Also bump `"version"` using semver for every subsequent release.
+</Warning>
 
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
+### Versioning guide
 
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
-
-```bash
-npm mint update
-```
-
-## Validating links
-
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
-
-```bash
-mint broken-links
-```
-
-## Deployment
-
-If the deployment is successful, you should see the following:
-
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
-
-## Code formatting
-
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
-  </Accordion>
-
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
-  </Accordion>
-</AccordionGroup>
-
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+| Change type | Version bump | Example |
+|---|---|---|
+| Bug fix | Patch | 0.1.0 → 0.1.1 |
+| New modifier / primitive | Minor | 0.1.0 → 0.2.0 |
+| Breaking API change | Major | 0.1.0 → 1.0.0
